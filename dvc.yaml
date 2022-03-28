@@ -1,0 +1,34 @@
+stages:
+  eap:
+    vars:
+      - column: eap
+      - container:
+          out: /mnt/out
+          tmf: /mnt/in/TRACMASS_run.hdf5
+          ini: /mnt/in/column_initime.hdf5
+          eap: /mnt/in/eap.csv
+          par: /params/params.yaml
+      - ../../params.yaml
+    cmd:
+      singularity run --no-home --cleanenv --containall
+        --bind $(realpath $(dvc root)/../..)/${data.hdf5}:${container.out}:rw
+        --bind $(realpath $(dvc root)/../..)/${data.tracmass_hdf5}:${container.tmf}:ro
+        --bind $(realpath $(dvc root)/../..)/${data.initime}:${container.ini}:ro
+        --bind $(realpath $(dvc root)/../..)/${data.eap_index}:${container.eap}:ro
+        --bind $(realpath $(dvc root)/../..)/params.yaml:${container.par}:ro
+      ../../src/dians-${package_version}.sif create_column
+        --tracmass-hdf5=${container.tmf}
+        --initimecol=${container.ini}
+        --column-dst=${container.out}
+        --column=${column}
+        --index-file=${container.eap}
+        --index-start-month=${start}
+        --index-end-month=${end}
+    deps:
+      - ../../params.yaml
+      - ../../${data.tracmass_hdf5}
+      - ../../${data.initime}
+      - ../../${data.eap_index}
+      - ../../src/dians-${package_version}.sif
+    outs:
+      - ../../${data.eap}
